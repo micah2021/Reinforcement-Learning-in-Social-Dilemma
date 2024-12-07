@@ -1,0 +1,344 @@
+\documentclass{article}
+\usepackage{graphicx} % Required for inserting images
+\documentclass[a4paper,10pt]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[english]{babel}
+\usepackage{amsthm}
+\usepackage{cite}
+\usepackage{tikz-cd}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{hyperref}
+\usepackage{indentfirst}
+
+\usepackage{epsfig,graphicx}
+
+\topmargin 0.0cm
+\headsep=0.0cm
+\headheight=0.0cm
+\textheight 22.5cm
+\oddsidemargin 0.0cm
+\evensidemargin 0.0cm
+\textwidth 15.0cm
+
+\DeclareMathOperator{\Spec}{Spec}
+\DeclareMathOperator{\Aut}{Aut}
+\DeclareMathOperator{\NAut}{NAut}
+\DeclareMathOperator{\End}{End}
+\DeclareMathOperator{\Char}{char}
+\DeclareMathOperator{\rref}{rref}
+\DeclareMathOperator{\Det}{det}
+\DeclareMathOperator{\DetB}{Det_p}
+\DeclareMathOperator{\Image}{Im}
+\DeclareMathOperator{\Ker}{Ker}
+\DeclareMathOperator{\Coker}{Coker}
+\DeclareMathOperator{\Colim}{Colim}
+\DeclareMathOperator{\Mat}{Mat}
+%\DeclareMathOperator{\tr}{tr}
+\DeclareMathOperator{\Tr}{tr}
+\DeclareMathOperator{\Fr}{Fr}
+\DeclareMathOperator{\ad}{ad}
+\DeclareMathOperator{\Deg}{deg}
+\DeclareMathOperator{\Der}{Der}
+\DeclareMathOperator{\Lie}{Lie}
+\DeclareMathOperator{\ord}{ord}
+\DeclareMathOperator{\dom}{dom}
+\DeclareMathOperator{\cod}{cod}
+\DeclareMathOperator{\Ext}{Ext}
+\DeclareMathOperator{\Sp}{Sp}
+\DeclareMathOperator{\Id}{Id}
+\DeclareMathOperator{\Ht}{ht}
+\DeclareMathOperator{\Sk}{Sk}
+\DeclareMathOperator{\Rk}{rank}
+\DeclareMathOperator{\J}{J}
+\DeclareMathOperator{\SL}{SL}
+\DeclareMathOperator{\GL}{GL}
+\DeclareMathOperator{\PSh}{PSh}
+\DeclareMathOperator{\diag}{diag}
+\DeclareMathOperator{\op}{op}
+\DeclareMathOperator{\gr}{gr}
+\DeclareMathOperator{\Ind}{Ind}
+\DeclareMathOperator{\Hom}{Hom}
+\DeclareMathOperator{\Nat}{Nat}
+\DeclareMathOperator{\Bilin}{Bilin}
+\DeclareMathOperator{\sHom}{hom}
+\DeclareMathOperator{\ob}{ob}
+\DeclareMathOperator{\Open}{Open}
+\DeclareMathOperator{\Ann}{Ann}
+\DeclareMathOperator{\Quot}{Quot}
+\DeclareMathOperator{\CRing}{\textbf{CRing}}
+\DeclareMathOperator{\Cat}{\textbf{Cat}}
+\DeclareMathOperator{\Set}{\textbf{Set}}
+\DeclareMathOperator{\Ens}{\textbf{Ens}}
+\DeclareMathOperator{\Met}{\textbf{Met}}
+\DeclareMathOperator{\Vect}{\textbf{Vect}}
+\DeclareMathOperator{\Dom}{\textbf{Dom}}
+\DeclareMathOperator{\Grp}{\textbf{Grp}}
+\DeclareMathOperator{\Top}{\textbf{Top}}
+\DeclareMathOperator{\Grpd}{\textbf{Grpd}}
+\DeclareMathOperator{\Toph}{\textbf{Toph}}
+\DeclareMathOperator{\Fld}{\textbf{Fld}}
+\DeclareMathOperator{\cMod}{\textbf{Mod}}
+\DeclareMathOperator{\cAb}{\textbf{Ab}}
+\newcommand{\TAut}{\operatorname{TAut}}
+\newtheorem{thm}{Theorem}[section]
+\newtheorem{lem}[thm]{Lemma}
+\newtheorem{slem}[thm]{Sublemma}
+\newtheorem{prop}[thm]{Proposition}
+\newtheorem{cor}[thm]{Corollary}
+\newtheorem{conj}[thm]{Conjecture}
+\newtheorem{Def}[thm]{Definition}
+\newtheorem{remark}[thm]{Remark}
+
+\begin{document}
+\title{Research ( Reinforcement Learning) Exercises and Solutions}
+\author{Micah Godwin Munang }
+\date{November 2024}
+\maketitle
+
+
+\section{RL Assigngment 2B}
+\begin{Exercises 2}
+1) Definition: reinforcement learning in Prisoner’s dilemma using 2-step SARSA.\\
+2) Method and formulae for above reinforcement learning Dilemma.\\
+
+
+The Prisoner’s Dilemma (PD) is a classic game in which agents must decide whether to cooperate or defect. Using 2-step SARSA, we approach this as a reinforcement learning problem where agents learn optimal strategies by interacting iteratively with the environment.\\
+
+2-step SARSA is a form of temporal-difference (TD) learning that considers rewards over two steps before updating action-value estimates. It's part of n-step SARSA and offers a balance between one-step methods (like basic SARSA) and Monte Carlo methods. \\
+
+
+
+#### Formulas for 2-step SARSA
+
+1. n-Step Return:
+ 
+   \[
+   G_{t:t+n} = R_{t+1} + \gamma R_{t+2} + \gamma^2 Q(S_{t+2}, A_{t+2}),
+   \]
+   where \( Q(S_{t+2}, A_{t+2}) \) estimates the remaining value at the state \( S_{t+2} \) after two steps.
+
+2. Update Rule:
+   The Q-value update rule for 2-step SARSA is:
+   \[
+   Q(S_t, A_t) \leftarrow Q(S_t, A_t) + \alpha \left[ G_{t:t+2} - Q(S_t, A_t) \right],
+   \]
+   where:
+   - \( \alpha \): Step size (learning rate),
+   - \( G_{t:t+2} \): Two-step return,
+   - \( \gamma \): Discount factor (how future rewards are weighted).
+
+3. Action Selection:
+   Actions are chosen based on an \(\epsilon\)-greedy policy:
+   \[
+   A_{t+1} \sim \pi(\cdot|S_{t+1}),
+   \]
+   where:
+   - \( \epsilon \): Probability of random action (exploration),
+   - \( 1 - \epsilon \): Probability of the greedy action (exploitation).
+
+
+#### Methodology: Applying 2-Step SARSA to the PD
+
+1. State Representation:\\
+   - Each agent's state is represented by its history or the previous outcomes in the game.\\
+   - Example: A state might include the history of whether the other agent cooperated or defected.\\
+
+2. Action Space:\\
+   - Each agent has two possible actions: Cooperate (C) or Defect (D).\\
+
+3. Reward Structure:\\
+   Rewards are based on the payoffs in the Prisoner’s Dilemma game:\\
+   - (C, C): Mutual cooperation yields \( R \) for both agents.\\
+   - (D, D): Mutual defection yields \( P \) for both agents.\\
+   - (C, D) or (D, C): One defects while the other cooperates, leading to \( T \) for the defector and \( S \) for the cooperator.\\
+
+4. Learning Process:\\
+   - Agents take actions in the environment (PD game).\\
+   - Observe rewards \( R_{t+1} \), \( R_{t+2} \) and transition states \( S_{t+1}, S_{t+2} \).\\
+   - Update Q-values using the 2-step SARSA formula. \\
+
+
+#### Pseudocode for 2-Step SARSA\\ 
+Initialize Q(s, a) arbitrarily for all states s and actions a
+Set step size α, discount factor γ, and exploration rate ε\\
+For each episode:\\
+    Initialize state S_0\\
+    Select action A0 using ε-greedy policy\\
+    For each time step t:\\
+        Take action At, observe reward Rt+1 and next state St+1\\
+        Select next action At+1 using ε-greedy policy \\
+        Compute $G_{t:t+2}$ = R_{t+1} + \gamma * R_{t+2} + $\gamma^2 $* $Q(S_{t+2}, A_{t+2})$\\
+        Update Q(S_t, A_t) \leftarrow Q(S_t, A_t) + \alpha  * [G_{t:t+2} - Q(S_t, A_t)]
+        S_t \leftarrow S_{t+1}, A_t \leftarrow A_{t+1} \\
+
+\textbf{Part 2 Questions}
+Simulating 2-Step SARSA in the Prisoner's Dilemma
+
+My goal is to observe how the Q-values evolve over time and what strategies emerge as the agents learn.\\
+
+### Simulation Steps
+
+ Set Up the Environment\\
+- States:  Prisoner's Dilemma does not rely on history in the simplest form.\\
+- Actions: Each agent has two possible actions: Cooperate (C) or Defect (D).\\
+- Define the rewards based on the payoff matrix:
+  - (C, C): \( R, R \), \\
+  - (D, D): \( P, P \), \\
+  - (C, D): \( S, T \), \\
+  - (D, C): \( T, S \). \\
+
+ Initialize Q-Values\\
+- Start with arbitrary \( Q(s, a) \) for both agents for each action \( a \in \{C, D\} \). \\
+
+
+- Using an \(\epsilon\)-greedy policy for action selection:
+  \[
+  A_t \sim \pi(a|s) = 
+  \begin{cases} 
+  \text{random action}, & \text{with probability } \epsilon, \\
+  \arg\max_a Q(s, a), & \text{with probability } 1 - \epsilon.
+  \end{cases}
+  \]
+
+ Apply 2-Step SARSA\\
+- For each episode:\\
+  1. Choose initial actions \( A_0 \) using the \(\epsilon\)-greedy policy.\\
+  2. Simulate interactions (play the PD game for multiple rounds).\\
+  3. At each step \( t \):\\
+     - Compute the 2-step return:
+       \[
+       G_{t:t+2} = R_{t+1} + \gamma R_{t+2} + \gamma^2 Q(S_{t+2}, A_{t+2}),
+       \]
+       where rewards and Q-values are observed.\\
+     - Update Q-values:\\
+       \[
+       Q(S_t, A_t) \leftarrow Q(S_t, A_t) + \alpha \left[ G_{t:t+2} - Q(S_t, A_t) \right].
+       \]
+  4. Repeat for \( n \) episodes.\\
+
+ Track Q-Values and Strategies\\
+- Monitor \( Q(s, C) \) and \( Q(s, D) \) over time for both agents. \\
+- Record the strategies (action probabilities) for both agents. \\
+
+
+### Expected Results\\
+1. Convergence of Q-Values:\\
+   - If \( \epsilon \) decays over time, agents may converge to deterministic strategies. \\
+   - With fixed \( \epsilon \), agents will exhibit stochastic behavior, balancing exploration and exploitation. \\
+
+2. Emerging Strategies:\\
+   - Depending on the discount factor \( \gamma \) and rewards, agents may learn to cooperate or defect. \\
+   - Observe if cooperation emerges as a stable outcome or if agents default to defection.\\
+
+For the implementation\\
+i give example for reward to be  R ,T, S,P = 3,5,0,1 ; 
+
+
+
+2. Experiment with Parameters:\\
+   - Vary \( \epsilon, \alpha, \gamma \) to see their effects on learning.\\
+
+
+
+\begin{center}
+    \includegraphics[width=0.7\textwidth]{1.png}
+\end{center}
+\begin{center}
+    \includegraphics[width=0.7\textwidth]{2.png}
+\end{center}
+
+
+### Key Observations\\
+1. Q-Values:\\
+   - Watch how \( Q(s, C) \) and \( Q(s, D) \) converge for both agents.\\
+   - Notice if one action (e.g., defecting) consistently outperforms the other.\\
+
+2. Action Probabilities:\\
+   - Plot \( P(C) \) to see if agents cooperate or defect more often over time.\\
+   - If \( P(C) \approx 0 \), the agent predominantly defects; if \( P(C) \approx 1 \), it cooperates.\\
+
+
+
+### Next Steps\\
+1. Parameter Tuning:\\
+   - Experiment with different \( \alpha, \gamma, \epsilon \).
+   - Adjust exploration decay (\( \epsilon \rightarrow 0 \)) to observe deterministic behavior.\\
+
+
+\begin{center}
+    \includegraphics[width=0.7\textwidth]{3.png}
+\end{center}
+
+\begin{center}
+    \includegraphics[width=0.7\textwidth]{4.png}
+\end{center}
+\begin{center}
+    \includegraphics[width=0.7\textwidth]{5.png}
+\end{center}
+
+
+
+### Updates to the Simulation\\
+
+ Dynamic Exploration Decay:\\
+- Add an \(\epsilon\)-decay mechanism:
+  \[
+  \epsilon_t = \epsilon_0 \times \exp(-k \cdot t),
+  \]
+  where \( k \) controls how fast exploration reduces over episodes.\\
+
+ Advanced Visualization: \\
+- Heatmaps:\\
+  - Show \( Q(C) - Q(D) \) for each agent over time to illustrate the relative strength of cooperation vs. defection.
+- Parameter Effects:\\
+  - Plot how different learning rates (\( \alpha \)) and discount factors (\( \gamma \)) affect convergence. \\
+
+ Comparison of Behaviors:\\
+- Test scenarios with varying reward structures (e.g., harsher penalties for mutual defection).
+\\
+
+### Key Features \\
+1. Dynamic Exploration:\\
+   - \( \epsilon \)-decay ensures agents explore less as they gain confidence in their learned policies. \\
+
+2. Heatmap:\\
+   - Visualizes the relative value of cooperation (\( Q(C) \)) vs. defection (\( Q(D) \)) for both agents over time. \\
+
+3. Parameter Adjustments:\\
+   - Easy to modify \( \alpha, \gamma, \epsilon \) and observe their effects. \\
+
+
+
+### Next Steps\\
+1. Experiment:\\
+   - Try harsher penalties (\( S, P \)) or higher rewards (\( R, T \)) to see how cooperation emerges. \\
+
+3. Analysis:\\
+   - Compare learning dynamics for 1-step, 2-step, and \( n \)-step SARSA.\\
+
+1. Q-Value Trajectories
+
+  
+- Expected Behavior:\\
+  - If defection (\( D \)) is dominant (due to higher payoff or lack of incentive to cooperate), \( Q(D) > Q(C) \).
+  - If cooperation (\( C \)) emerges as a viable strategy, \( Q(C) \approx Q(D) \).\\
+#### 2. Strategy Probabilities\\
+- What to Look For:\\
+  - The evolution of \( P(C) \) (probability of cooperating) for both agents.\\
+  - Does \( P(C) \) stabilize near 0 (favoring defection) or near 1 (favoring cooperation)? \\
+
+- Expected Behavior: \\
+  - If defection is the dominant strategy, \( P(C) \) should approach 0. \\
+  - With specific reward settings or higher \( \gamma \), \( P(C) \) may stabilize above 0.\\
+
+#### 3. Heatmap of \( Q(C) - Q(D) \)\\
+- What to Look For:\\
+  - Whether the relative value of \( C \) vs. \( D \) changes significantly during learning.\\
+  - Gradients in the heatmap: positive values (\( Q(C) > Q(D) \)) suggest cooperation, while negative values (\( Q(C) < Q(D) \)) suggest defection. \\
+
+\end{Exercises 2}
+
+\end{document}
