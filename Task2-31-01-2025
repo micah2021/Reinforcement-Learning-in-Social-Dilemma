@@ -1,0 +1,125 @@
+\documentclass{article}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+
+\title{Reinforcement Learning in the Prisoner's Dilemma using 2-Step SARSA}
+\author{Micah Munang}
+\date{31-01-2025}
+
+\begin{document}
+
+\maketitle
+
+\section{Introduction}
+ Methodology and implementation of reinforcement learning in the Prisoner's Dilemma (PD) using 2-step SARSA. The goal is to observe how Q-values evolve over time and what strategies emerge as agents learn.
+
+
+
+
+1. \textbf{n-Step Return}:
+\[
+G_{t:t+2} = R_{t+1} + \gamma R_{t+2} + \gamma^2 Q(S_{t+2}, A_{t+2}),
+\]
+where:
+\begin{itemize}
+    \item \(R_{t+1}\) and \(R_{t+2}\) are the rewards received at time steps \(t+1\) and \(t+2\).
+    \item \(\gamma\) is the discount factor (how future rewards are weighted).
+    \item \(Q(S_{t+2}, A_{t+2})\) is the estimated value of the state-action pair at time step \(t+2\).
+\end{itemize}
+
+2. \textbf{Q-Value Update Rule}:
+\[
+Q(S_t, A_t) \leftarrow Q(S_t, A_t) + \alpha \left[ G_{t:t+2} - Q(S_t, A_t) \right],
+\]
+where:
+\begin{itemize}
+    \item \(\alpha\) is the learning rate (step size).
+    \item \(G_{t:t+2}\) is the 2-step return.
+\end{itemize}
+
+3. \textbf{Action Selection}:
+\[
+A_{t+1} \sim \pi(\cdot | S_{t+1}),
+\]
+where:
+\begin{itemize}
+    \item \(\pi\) is the \(\epsilon\)-greedy policy.
+    \item \(\epsilon\) is the probability of selecting a random action (exploration).
+    \item \(1 - \epsilon\) is the probability of selecting the greedy action (exploitation).
+\end{itemize}
+
+\subsection{State Representation}
+In the simplest form of the Prisoner's Dilemma, the state representation does not rely on history. Each state is represented as the current state of the game, with no memory of previous actions.
+
+\subsection{Reward Structure}
+The reward structure is defined by the Prisoner's Dilemma payoff matrix:
+\[
+\begin{array}{c|cc}
+ & C & D \\
+\hline
+C & (R, R) & (S, T) \\
+D & (T, S) & (P, P) \\
+\end{array}
+\]
+where:
+\begin{itemize}
+    \item \(R = 3\) (reward for mutual cooperation),
+    \item \(T = 5\) (temptation to defect),
+    \item \(S = 0\) (sucker's payoff),
+    \item \(P = 1\) (punishment for mutual defection).
+\end{itemize}
+
+
+
+\begin{algorithmic}[1]
+\State Initialize \(Q(s, a)\) arbitrarily for all states \(s\) and actions \(a\)
+\State Set step size \(\alpha\), discount factor \(\gamma\), initial exploration rate \(\epsilon_0\), and decay rate \(k\)
+
+\For{each episode \(t\)}
+    \State Update exploration rate: \(\epsilon_t = \epsilon_0 \times \exp(-k \cdot t)\)
+    \State Initialize state \(S_0\)
+    \State Select action \(A_0\) using \(\epsilon_t\)-greedy policy
+
+    \For{each time step}
+        \State Take action \(A_t\), observe reward \(R_{t+1}\) and next state \(S_{t+1}\)
+        \State Select next action \(A_{t+1}\) using \(\epsilon_t\)-greedy policy
+        \State Compute 2-step return:
+        \[
+        G_{t:t+2} = R_{t+1} + \gamma R_{t+2} + \gamma^2 Q(S_{t+2}, A_{t+2})
+        \]
+        \State Update Q-value:
+        \[
+        Q(S_t, A_t) \leftarrow Q(S_t, A_t) + \alpha [G_{t:t+2} - Q(S_t, A_t)]
+        \]
+        \State Update state and action: \(S_t \leftarrow S_{t+1}\), \(A_t \leftarrow A_{t+1}\)
+    \EndFor
+\EndFor
+\end{algorithmic}
+\end{algorithm}
+
+
+\subsection{Heatmap of \(Q(C) - Q(D)\)}
+The heatmap will show the difference between the Q-values for cooperation (\(Q(C)\)) and defection (\(Q(D)\)) for each agent over time:
+\begin{itemize}
+    \item Positive values (\(Q(C) > Q(D)\)) indicate a preference for cooperation.
+    \item Negative values (\(Q(C) < Q(D)\)) indicate a preference for defection.
+\end{itemize}
+
+\subsection{Action Probabilities}
+Plot the probability of cooperation (\(P(C)\)) over time for both agents:
+\begin{itemize}
+    \item If \(P(C) \approx 0\), the agent predominantly defects.
+    \item If \(P(C) \approx 1\), the agent predominantly cooperates.
+\end{itemize}
+
+\section{Parameter Tuning}
+\begin{itemize}
+    \item \textbf{Learning rate (\(\alpha\))}: Start with \(\alpha = 0.1\) and test values in the range \([0.01, 0.5]\).
+    \item \textbf{Discount factor (\(\gamma\))}: Start with \(\gamma = 0.9\) and test values in the range \([0.5, 0.99]\).
+    \item \textbf{Exploration rate (\(\epsilon\))}: Start with \(\epsilon_0 = 1.0\) and decay it over time using \(k = 0.01\).
+\end{itemize}
+
+
+\end{document}
