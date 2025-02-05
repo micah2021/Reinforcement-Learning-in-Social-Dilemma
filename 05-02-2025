@@ -1,0 +1,119 @@
+import numpy as np
+import matplotlib.pyplot as plt
+# Define the Prisoner's Dilemma payoff matrix
+PAYOFF_MATRIX = {
+    ('C', 'C'): (3, 3),  # Mutual cooperation
+    ('C', 'D'): (0, 5),  # You cooperate, opponent defects
+    ('D', 'C'): (5, 0),  # You defect, opponent cooperates
+    ('D', 'D'): (1, 1),  # Mutual defection
+}
+
+# Actions: Cooperate (C) or Defect (D)
+ACTIONS = ['C', 'D']
+
+# Hyperparameters
+ALPHA = 0.1  # Learning rate
+GAMMA = 0.9  # Discount factor
+EPSILON = 0.1  # Exploration rate
+EPISODES = 1000  # Number of training episodes
+
+# Initialize Q-tables for each strategy
+def initialize_q_table():
+    q_table = {}
+    for state in PAYOFF_MATRIX.keys():  # Iterate over all states
+        for action in ACTIONS:  # Iterate over all actions
+            q_table[(state, action)] = 0  # Initialize Q-values for each state-action pair
+    return q_table
+
+# Define the four strategies
+def tit_for_tat(opponent_last_action):
+    return opponent_last_action if opponent_last_action else 'C'
+
+def generous_tit_for_tat(opponent_last_action):
+    if opponent_last_action == 'D' and np.random.rand() < 0.1:  # 10% chance to forgive
+        return 'C'
+    return opponent_last_action if opponent_last_action else 'C'
+
+def pavlov(my_last_action, my_last_reward):
+    if my_last_reward >= 3:  # Win-stay
+        return my_last_action
+    else:  # Lose-shift
+        return 'D' if my_last_action == 'C' else 'C'
+
+def adaptive_learning(q_table, state):
+    if np.random.rand() < EPSILON:  # Explore
+        return np.random.choice(ACTIONS)
+    else:  # Exploit
+        # Find the best action for the current state
+        return max(ACTIONS, key=lambda a: q_table.get((state, a), 0))  # Use .get() to handle missing keys gracefully
+
+# 2-step SARSA training function
+def train_2step_sarsa(q_table, strategy, episodes):
+    total_rewards = []
+    for episode in range(episodes):
+        state = (np.random.choice(ACTIONS), np.random.choice(ACTIONS))  # Initial state
+        action = adaptive_learning(q_table, state)  # Initial action
+        total_reward = 0
+        for _ in range(100):  # 100 steps per episode
+            # Opponent's action based on strategy
+            if strategy == 'tit_for_tat':
+                opponent_action = tit_for_tat(state[1])
+            elif strategy == 'generous_tit_for_tat':
+                opponent_action = generous_tit_for_tat(state[1])
+            elif strategy == 'pavlov':
+                opponent_action = pavlov(state[0], PAYOFF_MATRIX[state][0])
+            else:  # Random opponent
+                opponent_action = np.random.choice(ACTIONS)
+
+            # Get reward and next state
+            reward = PAYOFF_MATRIX[(action, opponent_action)][0]
+            next_state = (action, opponent_action)
+
+            # Next action using 2-step SARSA
+            next_action = adaptive_learning(q_table, next_state)
+            next_next_state = (next_action, tit_for_tat(opponent_action))  # Assume opponent uses Tit-for-Tat
+            next_next_action = adaptive_learning(q_table, next_next_state)
+
+            # Update Q-value using 2-step SARSA
+            q_table[(state, action)] += ALPHA * (
+                reward + 
+                GAMMA * PAYOFF_MATRIX[(next_action, tit_for_tat(opponent_action))][0] +
+                GAMMA**2 * q_table.get((next_next_state, next_next_action), 0) -  # Use .get() to handle missing keys
+                q_table.get((state, action), 0)  # Use .get() to handle missing keys
+            )
+
+            # Update state and action
+            state = next_state
+            action = next_action
+            total_reward += reward
+        total_rewards.append(total_reward)
+    return total_rewards, q_table  # Return rewards and the final Q-table
+
+# Train and evaluate the four strategies
+strategies = ['tit_for_tat', 'generous_tit_for_tat', 'pavlov', 'adaptive_learning']
+results = {}
+q_tables = {}  # Store Q-tables for each strategy
+
+for strategy in strategies:
+    q_table = initialize_q_table()
+    rewards, final_q_table = train_2step_sarsa(q_table, strategy, EPISODES)
+    results[strategy] = rewards
+    q_tables[strategy] = final_q_table  # Save the final Q-table
+    print(f"{strategy} training completed.")
+
+# Plot the results
+plt.figure(figsize=(10, 6))
+for strategy, rewards in results.items():
+    plt.plot(rewards, label=strategy)
+plt.xlabel('Episode')
+plt.ylabel('Total Reward')
+plt.title('2-Step SARSA Performance in Prisoner\'s Dilemma')
+plt.legend()
+plt.show()
+
+# Display Q-tables for each strategy
+for strategy, q_table in q_tables.items():
+    print(f"\nQ-Table for {strategy}:")
+    for state in PAYOFF_MATRIX.keys():
+        q_values = {action: q_table.get((state, action), 0) for action in ACTIONS}
+        print(f"State {state}: {q_values}")  
