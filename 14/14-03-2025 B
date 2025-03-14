@@ -1,0 +1,178 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+# Parameters
+L = 20  # Grid size
+alpha = 0.3  # Learning rate
+gamma = 0.9  # Discount factor
+epsilon = 0.02  # Exploration rate
+epochs = 1000  # Number of epochs
+D_g = 0.02  # Temptation to defect
+D_r = 0.0  # Sucker's payoff
+
+# Reward matrix
+R, S, T, P = 1, -D_r, 1 + D_g, 0
+reward_matrix = np.array([[R, S], [T, P]])
+
+# Initialize Q-tables for standard SARSA and 2-step SARSA
+Q_standard = np.zeros((L, L, 2))  # Actions: 0 = Cooperate, 1 = Defect
+Q_2step = np.zeros((L, L, 2))
+
+# Initialize strategies randomly
+strategy_standard = np.random.randint(0, 2, (L, L))
+strategy_2step = np.random.randint(0, 2, (L, L))
+
+# Track cooperation rates and Q-value convergence
+cooperation_standard = []
+cooperation_2step = []
+q_convergence_standard = []
+q_convergence_2step = []
+
+def get_reward(action_i, action_j):
+    return reward_matrix[action_i, action_j]
+
+def choose_action(Q, state, epsilon):
+    if np.random.rand() < epsilon:
+        return np.random.randint(0, 2)  # Explore
+    else:
+        return np.argmax(Q[state])  # Exploit
+
+def update_strategy(strategy, Q, state, action):
+    strategy[state] = action
+
+def simulate_step(Q, strategy, epsilon):
+    new_strategy = np.copy(strategy)
+    for i in range(L):
+        for j in range(L):
+            state = (i, j)
+            action = choose_action(Q, state, epsilon)
+            reward = 0
+            for di, dj in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
+                ni, nj = (i + di) % L, (j + dj) % L
+                neighbor_action = strategy[ni, nj]
+                reward += get_reward(action, neighbor_action)
+            # Update Q-value (standard SARSA)
+            next_action = choose_action(Q, state, epsilon)
+            Q[state][action] += alpha * (reward + gamma * Q[state][next_action] - Q[state][action])
+            update_strategy(new_strategy, Q, state, action)
+    return new_strategy, np.mean(Q)  # Return strategy and average Q-value
+
+def simulate_2step(Q, strategy, epsilon):
+    new_strategy = np.copy(strategy)
+    for i in range(L):
+        for j in range(L):
+            state = (i, j)
+            action = choose_action(Q, state, epsilon)
+            reward = 0
+            reward_next = 0
+            for di, dj in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
+                ni, nj = (i + di) % L, (j + dj) % L
+                neighbor_action = strategy[ni, nj]
+                reward += get_reward(action, neighbor_action)
+                # Simulate next step
+                next_action = choose_action(Q, (ni, nj), epsilon)
+                reward_next += get_reward(next_action, strategy[ni, nj])
+            # Update Q-value (2-step SARSA)
+            next_state = ((i + 1) % L, j)  # Example: move right
+            next_next_action = choose_action(Q, next_state, epsilon)
+            Q[state][action] += alpha * (reward + gamma * reward_next + gamma**2 * Q[next_state][next_next_action] - Q[state][action])
+            update_strategy(new_strategy, Q, state, action)
+    return new_strategy, np.mean(Q)  # Return strategy and average Q-value
+
+# Simulation loop
+for epoch in range(epochs):
+    strategy_standard, q_avg_standard = simulate_step(Q_standard, strategy_standard, epsilon)
+    strategy_2step, q_avg_2step = simulate_2step(Q_2step, strategy_2step, epsilon)
+    
+    # Track cooperation rates and Q-value convergence
+    cooperation_standard.append(np.mean(strategy_standard == 0))
+    cooperation_2step.append(np.mean(strategy_2step == 0))
+    q_convergence_standard.append(q_avg_standard)
+    q_convergence_2step.append(q_avg_2step)
+
+    # Print progress every 100 epochs
+    if epoch % 100 == 0:
+        print(f"Epoch {epoch}:")
+        print(f"  Standard SARSA - Cooperation Rate: {cooperation_standard[-1]:.4f}, Avg Q-value: {q_avg_standard:.4f}")
+        print(f"  2-Step SARSA   - Cooperation Rate: {cooperation_2step[-1]:.4f}, Avg Q-value: {q_avg_2step:.4f}")
+
+# Plot 1: Cooperation Rate Over Time
+plt.figure(figsize=(12, 6))
+plt.subplot(1, 2, 1)
+plt.plot(cooperation_standard, label="Standard SARSA")
+plt.plot(cooperation_2step, label="2-Step SARSA")
+plt.xlabel("Epochs")
+plt.ylabel("Cooperation Rate")
+plt.title("Cooperation Rate Over Time")
+plt.legend()
+
+# Plot 2: Q-value Convergence Over Time
+plt.subplot(1, 2, 2)
+plt.plot(q_convergence_standard, label="Standard SARSA")
+plt.plot(q_convergence_2step, label="2-Step SARSA")
+plt.xlabel("Epochs")
+plt.ylabel("Average Q-value")
+plt.title("Q-value Convergence Over Time")
+plt.legend()
+
+plt.tight_layout()
+plt.show()
+
+# Parameter Sensitivity Analysis
+def parameter_sensitivity(parameter, values, alpha, gamma, epsilon):
+    cooperation_rates = []
+    for value in values:
+        if parameter == "alpha":
+            alpha = value
+        elif parameter == "gamma":
+            gamma = value
+        elif parameter == "epsilon":
+            epsilon = value
+        # Reset Q-table and strategy
+        Q = np.zeros((L, L, 2))
+        strategy = np.random.randint(0, 2, (L, L))
+        for epoch in range(epochs):
+            strategy, _ = simulate_2step(Q, strategy, epsilon)
+        cooperation_rates.append(np.mean(strategy == 0))
+    return cooperation_rates
+
+# Test parameter sensitivity
+alpha_values = [0.1, 0.2, 0.3, 0.4, 0.5]
+gamma_values = [0.5, 0.7, 0.9, 0.99]
+epsilon_values = [0.01, 0.02, 0.05, 0.1]
+
+alpha_results = parameter_sensitivity("alpha", alpha_values, alpha, gamma, epsilon)
+gamma_results = parameter_sensitivity("gamma", gamma_values, alpha, gamma, epsilon)
+epsilon_results = parameter_sensitivity("epsilon", epsilon_values, alpha, gamma, epsilon)
+
+# Print parameter sensitivity results
+print("\nParameter Sensitivity Results:")
+print(f"Alpha Values: {alpha_values}")
+print(f"Cooperation Rates: {alpha_results}")
+print(f"Gamma Values: {gamma_values}")
+print(f"Cooperation Rates: {gamma_results}")
+print(f"Epsilon Values: {epsilon_values}")
+print(f"Cooperation Rates: {epsilon_results}")
+
+# Plot 3: Parameter Sensitivity
+plt.figure(figsize=(15, 5))
+plt.subplot(1, 3, 1)
+plt.plot(alpha_values, alpha_results, marker='o')
+plt.xlabel("Learning Rate (α)")
+plt.ylabel("Cooperation Rate")
+plt.title("Sensitivity to α")
+
+plt.subplot(1, 3, 2)
+plt.plot(gamma_values, gamma_results, marker='o')
+plt.xlabel("Discount Factor (γ)")
+plt.ylabel("Cooperation Rate")
+plt.title("Sensitivity to γ")
+
+plt.subplot(1, 3, 3)
+plt.plot(epsilon_values, epsilon_results, marker='o')
+plt.xlabel("Exploration Rate (ε)")
+plt.ylabel("Cooperation Rate")
+plt.title("Sensitivity to ε")
+
+plt.tight_layout()
+plt.show()
