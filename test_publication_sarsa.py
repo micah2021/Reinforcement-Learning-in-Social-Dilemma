@@ -2,7 +2,7 @@
 
 import numpy as np
 
-from publication_sarsa import TwoStepSARSAAgent, run_self_play
+from publication_sarsa import TwoStepSARSAAgent, _apply_n_step_update, run_self_play
 
 
 def test_exact_two_step_target() -> None:
@@ -18,6 +18,20 @@ def test_exact_two_step_target() -> None:
         next_action="D",
     )
     assert np.isclose(agent.q("start", "C"), 2.81)
+
+
+def test_forward_view_uses_two_rewards_and_bootstrap_action() -> None:
+    agent = TwoStepSARSAAgent(alpha=1.0, gamma=0.9)
+    agent.set_q("C", "D", 2.0)
+    _apply_n_step_update(
+        agent,
+        states=["start", "C", "D"],
+        actions=["C", "D", "D"],
+        rewards=[3.0, 4.0, 99.0],
+        tau=0,
+    )
+    # R_1 + gamma*R_2 + gamma^2*Q(S_2,A_2) = 3 + 3.6 + 1.62.
+    assert np.isclose(agent.q("start", "C"), 8.22)
 
 
 def test_terminal_two_step_target_does_not_bootstrap() -> None:

@@ -133,7 +133,15 @@ def _apply_n_step_update(
     tau: int,
     n: int = 2,
 ) -> None:
-    """Apply the forward-view n-step target for one transition index."""
+    """Apply the forward-view n-step target for transition ``tau``.
+
+    ``rewards[k]`` is the reward produced by ``(states[k], actions[k])``;
+    therefore it is R_{tau+1} when k == tau. The caller must invoke this only
+    after the bootstrap action at index ``tau + n`` is available, or during the
+    terminal flush when the return is intentionally truncated.
+    """
+    if not 0 <= tau < len(rewards):
+        raise IndexError("tau must index an observed transition")
     horizon = min(tau + n, len(rewards))
     target = sum(
         agent.gamma ** (k - tau) * rewards[k]
@@ -154,8 +162,10 @@ def run_self_play(
 ) -> dict:
     """Train two independent learners and return raw episode-level metrics.
 
-    Each episode is finite. Pending transitions are flushed after the final step,
-    so no terminal transition incorrectly bootstraps from a nonexistent future.
+    Each episode is finite. A transition at index ``tau`` is updated only after
+    the two-step bootstrap action at ``tau + 2`` has been observed. The final two
+    transitions are flushed with truncated returns, so no terminal transition
+    bootstraps from a nonexistent future.
     """
     if num_episodes <= 0 or steps_per_episode <= 0:
         raise ValueError("num_episodes and steps_per_episode must be positive.")
@@ -194,13 +204,15 @@ def run_self_play(
             returns_2.append(reward_2)
             counts[action_1 + action_2] += 1
 
-            tau = step - 2 + 1
+            # At step k, the action at k is the bootstrap action for tau=k-2.
+            tau = step - 2
             if tau >= 0:
                 _apply_n_step_update(agent_1, states_1, actions_1, returns_1, tau)
                 _apply_n_step_update(agent_2, states_2, actions_2, returns_2, tau)
             opponent_1, opponent_2 = action_2, action_1
 
-        for tau in range(max(0, steps_per_episode - 1), steps_per_episode):
+        # The final two transitions have no future bootstrap state/action.
+        for tau in range(max(0, steps_per_episode - 2), steps_per_episode):
             _apply_n_step_update(agent_1, states_1, actions_1, returns_1, tau)
             _apply_n_step_update(agent_2, states_2, actions_2, returns_2, tau)
 
